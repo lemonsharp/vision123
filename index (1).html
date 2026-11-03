@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f5f6ef" />
+  <meta name="description" content="Google Teachable Machine으로 학습한 AI 모델을 이용한 동물 이미지 분류 웹사이트입니다." />
+  <title>AnimalScope | AI 동물 분류 연구소</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#f5f6ef; --paper:#fff; --forest:#123f35; --forest-dark:#092b24;
+      --green:#c9efb1; --sage:#ecf2e8; --ink:#172d28; --muted:#71817a;
+      --line:#dfe6df; --orange:#ffad65; --shadow:0 15px 55px rgba(16,53,42,.07);
+    }
+    *, *::before, *::after { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; color:var(--ink); background:var(--bg); font:16px/1.65 'DM Sans','Noto Sans KR',sans-serif; }
+    button, input { font:inherit; }
+    button { cursor:pointer; }
+    [hidden] { display:none!important; }
+    :focus-visible { outline:3px solid #5ea98a; outline-offset:3px; }
+    .container { width:min(1180px, calc(100% - 40px)); margin:auto; }
+    .nav { display:flex; justify-content:space-between; align-items:center; padding:24px 0; gap:12px; }
+    .brand { display:inline-flex; align-items:center; gap:11px; font-family:'DM Sans',sans-serif; font-size:20px; font-weight:800; letter-spacing:-.8px; }
+    .brand-mark { background:var(--forest); display:grid; place-items:center; border-radius:14px; width:42px; height:42px; font-size:23px; box-shadow:0 5px 0 #bfd9b9; }
+    .nav-info { color:var(--muted); font-size:13px; font-weight:700; }
+    .nav-info b { color:var(--forest); }
+    .hero { background:var(--forest); color:white; border-radius:30px; padding:48px 50px; display:flex; align-items:center; justify-content:space-between; gap:24px; overflow:hidden; position:relative; isolation:isolate; }
+    .hero::before { content:""; position:absolute; width:470px; height:470px; right:-100px; top:-190px; background:#376c53; border-radius:50%; opacity:.42; z-index:-1; }
+    .hero::after { content:""; position:absolute; width:360px; height:360px; right:200px; bottom:-280px; background:#1d5849; border-radius:50%; z-index:-1; }
+    .eyebrow { font-size:12px; letter-spacing:2.5px; font-weight:800; color:#c7e3d1; }
+    h1 { font-size:clamp(32px,4.8vw,56px); letter-spacing:-2.5px; line-height:1.2; margin:18px 0; font-weight:900; }
+    h1 em { color:var(--green); font-style:normal; }
+    .hero p { max-width:470px; color:#c4dbd2; font-size:15px; margin:0 0 22px; }
+    .hero-pill { display:inline-flex; align-items:center; gap:9px; padding:9px 14px; background:#ffffff19; color:#e5f4e8; border:1px solid #ffffff34; border-radius:99px; font-size:12px; font-weight:700; }
+    .hero-pill span { width:7px; height:7px; background:var(--green); border-radius:50%; }
+    .hero-art { position:relative; min-width:310px; height:250px; }
+    .animal-tile { position:absolute; display:grid; place-items:center; border-radius:27px; background:#fff; box-shadow:0 18px 35px #001c1759; transform:rotate(var(--rot)); }
+    .animal-tile b { font-size:clamp(62px,7vw,92px); font-weight:normal; line-height:1; }
+    .animal-tile small { position:absolute; bottom:10px; font-weight:800; color:var(--forest); font-size:11px; }
+    .animal-tile.a { width:155px; height:170px; left:16px; top:14px; --rot:-10deg; background:#fbe7c9; }
+    .animal-tile.b { width:165px; height:183px; left:146px; top:44px; --rot:10deg; background:#dcf4df; }
+    .animal-tile.c { width:105px; height:106px; left:80px; top:146px; --rot:4deg; background:#fff; }
+    .animal-tile.c b { font-size:63px; }
+    .quickstats { margin:22px 0 30px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:15px; }
+    .stat { background:#fff; border:1px solid var(--line); border-radius:18px; padding:16px 19px; display:flex; align-items:center; gap:13px; }
+    .stat-ico { width:40px; height:40px; display:grid; place-items:center; border-radius:13px; background:#eef4e9; font-size:19px; flex:none; }
+    .stat small { display:block; color:var(--muted); font-size:11px; font-weight:700; }
+    .stat strong { display:block; color:var(--ink); font-size:15px; font-weight:800; overflow-wrap:anywhere; }
+    .workspace { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); gap:22px; align-items:start; }
+    .panel { background:var(--paper); border:1px solid var(--line); border-radius:24px; box-shadow:var(--shadow); overflow:hidden; }
+    .panel-top { padding:25px 28px 0; }
+    .overline { display:inline-block; font:800 11px 'DM Sans',sans-serif; letter-spacing:2px; color:#79958b; margin-bottom:7px; }
+    .panel h2 { font-size:23px; letter-spacing:-.9px; line-height:1.3; margin:0 0 8px; }
+    .subtext { margin:0; font-size:13px; color:var(--muted); }
+    .tabs { background:#f0f3ec; padding:5px; margin:22px 28px 18px; border-radius:14px; display:flex; gap:5px; }
+    .tab { flex:1; border:0; background:transparent; border-radius:10px; min-height:45px; font-weight:800; color:#6d7e75; }
+    .tab.active { background:#fff; color:var(--forest); box-shadow:0 2px 8px #173d3017; }
+    .pane { padding:0 28px 26px; }
+    .dropzone { min-height:305px; width:100%; border:2px dashed #b9cdbf; border-radius:18px; background:#fafbf8; display:flex; align-items:center; justify-content:center; text-align:center; position:relative; overflow:hidden; transition:background .15s, border-color .15s; cursor:pointer; }
+    .dropzone:hover, .dropzone.dragging { border-color:#5d967a; background:#f0f8e9; }
+    .upload-prompt { padding:32px 16px; pointer-events:none; }
+    .upload-icon { width:72px; height:72px; border-radius:22px; background:#e8f1de; display:grid; place-items:center; margin:0 auto 17px; font-size:35px; }
+    .upload-title { font-size:17px; font-weight:800; }
+    .upload-hint { font-size:13px; color:var(--muted); margin-top:6px; }
+    .upload-cta { display:inline-block; background:var(--forest); color:#fff; font-size:13px; font-weight:800; border-radius:12px; margin-top:21px; padding:10px 21px; }
+    #preview-img { width:100%; max-height:425px; object-fit:contain; display:block; padding:10px; }
+    .replace-fab { position:absolute; bottom:13px; right:13px; border:0; border-radius:11px; font-size:12px; font-weight:800; padding:9px 12px; background:var(--forest); color:#fff; }
+    .preview-host { position:relative; width:100%; }
+    .camera-stage { background:#162c29; border-radius:18px; min-height:305px; overflow:hidden; position:relative; display:grid; place-items:center; }
+    #camera-video { display:block; width:100%; max-height:425px; min-height:300px; object-fit:cover; transform:scaleX(-1); }
+    .camera-empty { color:#d5e6dd; text-align:center; padding:45px 16px; }
+    .camera-empty i { font-size:48px; font-style:normal; display:block; margin-bottom:10px; }
+    .camera-controls { display:flex; gap:9px; margin-top:12px; }
+    .btn { border-radius:12px; padding:11px 17px; min-height:46px; font-size:13px; font-weight:800; border:1px solid var(--line); background:white; color:var(--forest); }
+    .btn.primary { background:var(--forest); border-color:var(--forest); color:white; }
+    .btn:disabled { opacity:.55; cursor:not-allowed; }
+    .btn:hover:not(:disabled) { filter:brightness(.96); }
+    .notice { margin-top:14px; display:flex; align-items:start; gap:8px; font-size:12px; color:var(--muted); }
+    .notice b { color:var(--forest); }
+    .results-body { padding:20px 28px 25px; }
+    .result-feature { background:#edf6e9; border:1px solid #dcefd3; border-radius:19px; padding:21px; display:flex; align-items:center; gap:17px; min-height:144px; }
+    .result-icon { flex:none; display:grid; place-items:center; width:83px; height:83px; border-radius:23px; background:#fff; font-size:47px; }
+    .result-caption { color:#63806e; font-size:11px; font-weight:800; letter-spacing:1px; }
+    .result-name { font-size:clamp(18px,2.4vw,27px); font-weight:900; letter-spacing:-.8px; margin:1px 0; line-height:1.35; word-break:break-word; }
+    .result-desc { color:#678471; font-size:12px; font-weight:700; }
+    .section-title { font-size:13px; font-weight:800; color:#4b675b; margin:24px 0 13px; display:flex; justify-content:space-between; }
+    .section-title small { font-size:11px; color:#95a69a; }
+    .prediction { margin:0 0 17px; }
+    .prediction-title { display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:13px; margin-bottom:7px; }
+    .prediction-title b { overflow-wrap:anywhere; }
+    .prediction-title strong { font-family:'DM Sans',sans-serif; font-size:13px; color:var(--forest); }
+    .track { width:100%; height:10px; border-radius:99px; background:#edf2ec; overflow:hidden; }
+    .fill { height:100%; width:0; background:#b7d4b9; border-radius:99px; transition:width .35s; }
+    .prediction:first-child .fill { background:var(--forest); }
+    .empty-result { padding:28px 4px 18px; text-align:center; color:#789087; font-size:13px; }
+    .empty-result .big { display:block; font-size:40px; margin-bottom:12px; }
+    .model-area { background:#f8faf6; padding:21px 28px 26px; border-top:1px solid var(--line); }
+    .model-area h3 { margin:0 0 10px; font-size:14px; }
+    .model-row { display:flex; gap:8px; }
+    .model-row input { flex:1; min-width:0; border:1px solid #d5e0d5; border-radius:11px; padding:10px 12px; background:#fff; font-size:12px; color:var(--ink); }
+    .model-row .btn { flex:none; padding:10px 13px; }
+    .model-message { font-size:11px; margin:11px 0 0; color:#71847b; overflow-wrap:anywhere; }
+    .model-message.error { color:#b24343; }
+    .model-message.success { color:#15714b; }
+    .class-pills { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+    .class-pill { background:#e8f0e6; color:#416656; border-radius:99px; padding:5px 9px; font-size:11px; font-weight:700; }
+    .howto { margin:32px 0 40px; }
+    .howto-header { display:flex; align-items:end; justify-content:space-between; margin-bottom:14px; gap:12px; }
+    .howto-header h2 { margin:0; font-size:22px; letter-spacing:-.8px; }
+    .howto-header p { margin:0; color:var(--muted); font-size:12px; }
+    .steps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+    .step { background:#fff; border:1px solid var(--line); border-radius:16px; padding:21px; }
+    .step-num { display:inline-grid; place-items:center; width:30px; height:30px; border-radius:10px; background:#e8f4db; color:var(--forest); font-size:13px; font-weight:900; }
+    .step h3 { font-size:15px; margin:12px 0 6px; }
+    .step p { color:var(--muted); font-size:12px; margin:0; line-height:1.7; }
+    footer { border-top:1px solid #dce5da; margin:0 0 32px; padding-top:17px; color:#8a9b92; display:flex; justify-content:space-between; gap:14px; font-size:11px; }
+    footer b { color:var(--forest); }
+    @media (max-width:900px) {
+      .workspace { grid-template-columns:1fr; }
+      .hero { padding:36px; }
+      .hero-art { min-width:240px; transform:scale(.8); transform-origin:center right; margin-right:-20px; }
+    }
+    @media (max-width:640px) {
+      .container { width:min(100% - 24px,1180px); }
+      .nav { padding:17px 0; }
+      .nav-info { font-size:11px; text-align:right; }
+      .brand { font-size:17px; }
+      .brand-mark { width:38px; height:38px; }
+      .hero { padding:31px 25px 28px; display:block; border-radius:24px; }
+      .hero h1 { font-size:38px; letter-spacing:-1.8px; }
+      .hero p { font-size:13px; }
+      .hero-art { height:165px; min-width:0; width:255px; transform:scale(.65); transform-origin:top left; margin:10px 0 -55px 10px; }
+      .quickstats { grid-template-columns:1fr 1fr; gap:8px; margin:15px 0 19px; }
+      .quickstats .stat:nth-child(3) { grid-column:1/-1; }
+      .stat { padding:12px; gap:9px; }
+      .stat-ico { width:35px; height:35px; }
+      .stat strong { font-size:13px; }
+      .stat small { font-size:10px; }
+      .panel { border-radius:20px; }
+      .panel-top { padding:22px 18px 0; }
+      .pane { padding:0 18px 19px; }
+      .tabs { margin:18px 18px 14px; }
+      .results-body { padding:19px 18px; }
+      .model-area { padding:20px 18px; }
+      .dropzone,.camera-stage { min-height:275px; }
+      .result-feature { padding:15px; gap:12px; }
+      .result-icon { width:65px; height:65px; font-size:37px; }
+      .howto { margin:26px 0; }
+      .steps { grid-template-columns:1fr; }
+      .howto-header { display:block; }
+      .howto-header p { margin-top:6px; }
+      footer { display:grid; gap:3px; line-height:1.9; }
+    }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important; scroll-behavior:auto!important; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="nav" aria-label="상단 정보">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">🐾</span><span>AnimalScope<span style="color:#85b883">.</span></span></div>
+      <div class="nav-info">Google <b>Teachable Machine</b> 기반<br />이미지 분류 AI 프로젝트</div>
+    </nav>
+
+    <header class="hero">
+      <div>
+        <div class="eyebrow">MEET YOUR ANIMAL AI</div>
+        <h1>사진 속 동물,<br /><em>AI가 찾아줄게요.</em></h1>
+        <p>이미지를 업로드하거나 웹캠을 켜보세요. 직접 학습한 AI가 어떤 동물인지 예측하고 분류 확률까지 보여줍니다.</p>
+        <span class="hero-pill"><span aria-hidden="true"></span> 직접 학습하는 머신러닝 체험</span>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="animal-tile a"><b>🐶</b><small>DOG</small></div>
+        <div class="animal-tile b"><b>🐱</b><small>CAT</small></div>
+        <div class="animal-tile c"><b>🐰</b></div>
+      </div>
+    </header>
+
+    <section class="quickstats" aria-label="모델 상태">
+      <div class="stat"><span class="stat-ico">🧠</span><div><small>학습 모델</small><strong id="model-quick-status">연결 확인 중</strong></div></div>
+      <div class="stat"><span class="stat-ico">🦁</span><div><small>분류 가능한 종류</small><strong id="model-classes">—</strong></div></div>
+      <div class="stat"><span class="stat-ico">⚡</span><div><small>분석 방식</small><strong>브라우저에서 실시간 분석</strong></div></div>
+    </section>
+
+    <main class="workspace">
+      <section class="panel" aria-labelledby="input-heading">
+        <div class="panel-top">
+          <span class="overline">01 / INPUT</span>
+          <h2 id="input-heading">어떤 동물인지 알아볼까요?</h2>
+          <p class="subtext">사진 업로드 또는 웹캠 중 원하는 방법을 선택하세요.</p>
+        </div>
+        <div class="tabs" role="tablist" aria-label="이미지 입력 방법">
+          <button class="tab active" id="tab-upload" role="tab" aria-selected="true" aria-controls="pane-upload" type="button">🖼️ 사진 업로드</button>
+          <button class="tab" id="tab-camera" role="tab" aria-selected="false" aria-controls="pane-camera" type="button">📷 실시간 웹캠</button>
+        </div>
+        <div class="pane" id="pane-upload" role="tabpanel" aria-labelledby="tab-upload">
+          <input id="image-input" type="file" accept="image/*" hidden />
+          <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="동물 이미지 업로드. 클릭하거나 드래그해서 이미지를 선택하세요.">
+            <div class="upload-prompt" id="upload-prompt">
+              <span class="upload-icon">🖼️</span>
+              <div class="upload-title">동물 사진을 올려주세요</div>
+              <div class="upload-hint">클릭 또는 드래그 앤 드롭 · JPG, PNG, WEBP</div>
+              <span class="upload-cta">+ 사진 선택하기</span>
+            </div>
+            <div class="preview-host" id="preview-host" hidden>
+              <img id="preview-img" alt="분류할 동물 사진 미리보기" />
+              <button type="button" class="replace-fab" id="replace-image">↗ 다른 사진 선택</button>
+            </div>
+          </div>
+          <p class="notice"><span>💡</span><span>AI를 학습시킬 때 사용하지 않은 <b>새로운 사진</b>으로 테스트해야 정확도를 확인할 수 있어요.</span></p>
+        </div>
+        <div class="pane" id="pane-camera" role="tabpanel" aria-labelledby="tab-camera" hidden>
+          <div class="camera-stage">
+            <div class="camera-empty" id="camera-empty"><i>📹</i>카메라를 켜면 실시간 분석이 시작됩니다.<br /><small>카메라 접근 권한이 필요합니다.</small></div>
+            <video id="camera-video" autoplay muted playsinline hidden></video>
+          </div>
+          <div class="camera-controls">
+            <button class="btn primary" id="camera-start" type="button">▶ 웹캠 시작</button>
+            <button class="btn" id="camera-stop" type="button" disabled>■ 웹캠 정지</button>
+          </div>
+          <p class="notice"><span>🔒</span><span>영상은 브라우저에서 분석되며 이 사이트의 서버에 저장하지 않습니다. HTTPS 환경(GitHub Pages)에서 사용하세요.</span></p>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="result-heading" aria-live="polite">
+        <div class="panel-top">
+          <span class="overline">02 / ANALYSIS</span>
+          <h2 id="result-heading">AI 분석 결과</h2>
+          <p class="subtext">AI가 예측한 분류와 각 항목별 확률입니다.</p>
+        </div>
+        <div class="results-body">
+          <div class="result-feature">
+            <div class="result-icon" id="result-emoji" aria-hidden="true">🐾</div>
+            <div>
+              <div class="result-caption" id="result-caption">WAITING FOR IMAGE</div>
+              <div class="result-name" id="result-name">분석을 기다리고 있어요</div>
+              <div class="result-desc" id="result-desc">먼저 동물 사진을 선택해주세요.</div>
+            </div>
+          </div>
+          <div class="section-title"><span>분류별 예측 확률</span><small id="result-time">아직 분석 전</small></div>
+          <div id="predictions"><div class="empty-result"><span class="big">🔍</span>사진을 넣으면 여기에서<br />동물별 확률을 확인할 수 있어요.</div></div>
+          <p class="notice"><span>ℹ️</span><span>확률은 <b>학습된 클래스 사이에서의 상대적 예측값</b>입니다. 낯선 동물도 기존 클래스 중 하나로 분류될 수 있어요.</span></p>
+        </div>
+        <div class="model-area">
+          <h3>⚙️ AI 모델 연결</h3>
+          <div class="model-row">
+            <input id="model-url" type="url" spellcheck="false" placeholder="선택: Teachable Machine 모델 공유 주소" aria-label="Teachable Machine 모델 공유 주소" />
+            <button id="model-connect" class="btn primary" type="button">모델 연결</button>
+          </div>
+          <p id="model-message" class="model-message" role="status">GitHub의 ./model/ 폴더에서 모델을 자동으로 찾습니다. 모델 공유 주소를 입력해도 됩니다.</p>
+          <div id="class-pills" class="class-pills" aria-label="모델 클래스 목록"></div>
+        </div>
+      </section>
+    </main>
+
+    <section class="howto" aria-labelledby="howto-heading">
+      <div class="howto-header"><h2 id="howto-heading">이렇게 사용해보세요 ✨</h2><p>나만의 이미지 분류 AI를 만드는 3단계</p></div>
+      <div class="steps">
+        <article class="step"><span class="step-num">01</span><h3>동물 사진 학습시키기</h3><p>Teachable Machine 이미지 프로젝트에서 강아지·고양이·토끼 등 3종 이상의 클래스를 만들고, 사진을 여러 장씩 넣어 학습시켜요.</p></article>
+        <article class="step"><span class="step-num">02</span><h3>모델 내보내기</h3><p>모델 내보내기 → TensorFlow.js → 다운로드를 선택한 뒤 모델 파일 3개를 GitHub의 model 폴더에 넣어요.</p></article>
+        <article class="step"><span class="step-num">03</span><h3>새 사진으로 테스트</h3><p>이 사이트에서 학습에 사용하지 않은 사진이나 웹캠 영상으로 동물을 분류하고 정확도를 확인해요.</p></article>
+      </div>
+    </section>
+
+    <footer><span><b>AnimalScope</b> · Teachable Machine + TensorFlow.js</span><span>학습용 데모 · 학습 모델의 데이터 품질에 따라 결과가 달라집니다.</span></footer>
+  </div>
+
+  <!-- 구글 티처블 머신의 이미지 분류 모델 구동 라이브러리 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"></script>
+  <script>
+    'use strict';
+    // ──────────────────────────────────────────────────────────────────────
+    // 기본 모델 저장 위치. GitHub 저장소에 model 폴더를 만들고
+    // model.json, metadata.json, weights.bin을 업로드하세요.
+    // 외부 공개 모델 주소를 사용하고 싶다면 오른쪽 'AI 모델 연결'에 입력하세요.
+    // ──────────────────────────────────────────────────────────────────────
+    const DEFAULT_MODEL_URL = './model/';
+    const CONFIDENCE_THRESHOLD = 0.6;
+    const $ = id => document.getElementById(id);
+
+    let aiModel = null;
+    let modelToken = 0;
+    let modelLabels = [];
+    let imageObjectURL = null;
+    let imageIsReady = false;
+    let activeTab = 'upload';
+    let cameraStream = null;
+    let cameraToken = 0;
+    let predictionBusy = false;
+    let predictionToken = 0;
+
+    function animalEmoji(label) {
+      const name = String(label).trim().toLowerCase();
+      const matches = [
+        [['개구리','frog'],'🐸'], [['강아지','멍멍이','puppy','dog'],'🐶'],
+        [['고양이','냥이','kitten','cat'],'🐱'], [['토끼','rabbit','bunny'],'🐰'],
+        [['말','horse'],'🐴'], [['코끼리','elephant'],'🐘'], [['소','cow','cattle'],'🐮'],
+        [['양','sheep'],'🐑'], [['닭','chicken'],'🐔'], [['나비','butterfly'],'🦋'],
+        [['거미','spider'],'🕷️'], [['다람쥐','squirrel'],'🐿️'], [['사자','lion'],'🦁'],
+        [['호랑이','tiger'],'🐯'], [['돼지','pig'],'🐷'], [['곰','bear'],'🐻'],
+        [['여우','fox'],'🦊'], [['판다','panda'],'🐼'], [['원숭이','monkey'],'🐵'],
+        [['새','bird'],'🐦'], [['물고기','fish'],'🐟'], [['펭귄','penguin'],'🐧'],
+        [['햄스터','hamster'],'🐹'], [['오리','duck'],'🦆'], [['거북이','turtle'],'🐢'],
+        [['뱀','snake'],'🐍'], [['고슴도치','hedgehog'],'🦔']
+      ];
+      for (const [terms, emoji] of matches) if (terms.some(term => name.includes(term))) return emoji;
+      return '🐾';
+    }
+
+    function setModelStatus(message, type = '') {
+      $('model-message').textContent = message;
+      $('model-message').className = 'model-message ' + type;
+      $('model-quick-status').textContent = type === 'success' ? '연결 완료 ✓' : type === 'error' ? '연결 필요' : '연결 중…';
+    }
+    function setResultPlaceholder(title, description, icon = '🐾') {
+      $('result-caption').textContent = 'READY FOR ANALYSIS';
+      $('result-name').textContent = title;
+      $('result-desc').textContent = description;
+      $('result-emoji').textContent = icon;
+      $('result-time').textContent = '아직 분석 전';
+      $('predictions').replaceChildren();
+      const box = document.createElement('div');
+      box.className = 'empty-result';
+      box.textContent = description;
+      $('predictions').appendChild(box);
+    }
+    function normalizedModelBase(raw) {
+      const trimmed = (raw || DEFAULT_MODEL_URL).trim();
+      const url = new URL(trimmed.endsWith('/') ? trimmed : trimmed + '/', location.href);
+      if (!['https:', 'http:'].includes(url.protocol)) throw new Error('http 또는 https 모델 주소를 입력해주세요.');
+      return url.href;
+    }
+
+    async function loadModel(raw, isAutomatic = false) {
+      const token = ++modelToken;
+      $('model-connect').disabled = true;
+      setModelStatus('AI 모델을 불러오고 있습니다…');
+      try {
+        if (!window.tf || !window.tmImage) throw new Error('AI 실행 라이브러리를 가져오지 못했습니다. 인터넷 연결을 확인해주세요.');
+        if (location.protocol === 'file:' && !raw) throw new Error('로컬 파일에서는 모델 자동 로딩이 제한됩니다. GitHub Pages에서 실행해주세요.');
+        const base = normalizedModelBase(raw);
+        const model = await tmImage.load(base + 'model.json', base + 'metadata.json');
+        if (token !== modelToken) return;
+        aiModel = model;
+        modelLabels = model.getClassLabels();
+        $('model-classes').textContent = modelLabels.length + '종류';
+        $('class-pills').replaceChildren(...modelLabels.map(label => {
+          const span = document.createElement('span');
+          span.className = 'class-pill';
+          span.textContent = animalEmoji(label) + ' ' + label;
+          return span;
+        }));
+        setModelStatus('모델 연결 완료! ' + modelLabels.join(' · '), 'success');
+        if (activeTab === 'upload' && imageIsReady) await predict($('preview-img'));
+      } catch (error) {
+        if (token !== modelToken) return;
+        if (!aiModel) {
+          $('model-classes').textContent = '—';
+          $('class-pills').replaceChildren();
+        }
+        const suffix = isAutomatic ? ' 학습 모델 3개를 model 폴더에 올리거나 아래에 공개 모델 주소를 입력하세요.' : ' 모델 주소 또는 GitHub의 model 폴더를 확인해주세요.';
+        setModelStatus((error.message || '모델 연결 실패') + suffix, 'error');
+      } finally {
+        if (token === modelToken) $('model-connect').disabled = false;
+      }
+    }
+
+    function displayPredictions(predictions) {
+      if (!Array.isArray(predictions) || !predictions.length) return;
+      const sorted = [...predictions].sort((a,b) => b.probability - a.probability);
+      const best = sorted[0];
+      const confidence = Math.max(0,Math.min(1,best.probability));
+      const high = confidence >= CONFIDENCE_THRESHOLD;
+      $('result-emoji').textContent = high ? animalEmoji(best.className) : '🤔';
+      $('result-caption').textContent = high ? 'MOST LIKELY ANIMAL' : 'LOW CONFIDENCE';
+      $('result-name').textContent = high ? best.className : '판단이 어려워요';
+      $('result-desc').textContent = high ? 'AI 예측 확률 ' + (confidence * 100).toFixed(1) + '%' : '가장 높은 예측은 ' + best.className + ' ' + (confidence * 100).toFixed(1) + '%입니다.';
+      $('result-time').textContent = '분석 완료';
+      const fragment = document.createDocumentFragment();
+      for (const item of sorted) {
+        const probability = Math.max(0,Math.min(1,item.probability));
+        const row = document.createElement('div'); row.className='prediction';
+        const heading = document.createElement('div'); heading.className='prediction-title';
+        const label = document.createElement('b'); label.textContent=animalEmoji(item.className)+' '+item.className;
+        const value = document.createElement('strong'); value.textContent=(probability*100).toFixed(1)+'%';
+        heading.append(label,value);
+        const track = document.createElement('div'); track.className='track';
+        const fill = document.createElement('div'); fill.className='fill'; fill.style.width=(probability*100)+'%';
+        track.appendChild(fill); row.append(heading,track); fragment.appendChild(row);
+      }
+      $('predictions').replaceChildren(fragment);
+    }
+
+    async function predict(element) {
+      if (!aiModel) return;
+      if (predictionBusy) {
+        const retryToken = predictionToken;
+        setTimeout(() => { if (retryToken === predictionToken) predict(element); }, 120);
+        return;
+      }
+      const token = predictionToken;
+      const model = aiModel;
+      predictionBusy = true;
+      try {
+        const predictions = await model.predict(element);
+        if (token === predictionToken && model === aiModel && predictions.every(item=>Number.isFinite(item.probability))) displayPredictions(predictions);
+      } catch (error) {
+        if (token === predictionToken) setResultPlaceholder('분석 오류','이미지를 읽지 못했습니다. 다른 사진으로 다시 시도해주세요.','⚠️');
+        console.error('AI 분석 오류:',error);
+      } finally { predictionBusy = false; }
+    }
+
+    function openImageSelector() { $('image-input').click(); }
+    function useImage(file) {
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { alert('JPG, PNG, WEBP 등 이미지 파일을 선택해주세요.'); return; }
+      if (file.size > 20*1024*1024) { alert('20MB 이하의 사진을 선택해주세요.'); return; }
+      ++predictionToken;
+      imageIsReady = false;
+      if (imageObjectURL) URL.revokeObjectURL(imageObjectURL);
+      imageObjectURL = URL.createObjectURL(file);
+      const img = $('preview-img');
+      img.onload = async () => {
+        imageIsReady = true;
+        $('upload-prompt').hidden = true;
+        $('preview-host').hidden = false;
+        if (activeTab !== 'upload') return;
+        if (aiModel) {
+          setResultPlaceholder('사진 분석 중','AI가 사진을 분석하고 있습니다…','🧠');
+          await predict(img);
+        } else setResultPlaceholder('모델 연결이 필요해요','먼저 AI 모델을 연결하면 자동으로 분석합니다.','🧠');
+      };
+      img.onerror = () => setResultPlaceholder('사진 불러오기 실패','다른 이미지 파일을 선택해주세요.','⚠️');
+      img.src = imageObjectURL;
+    }
+
+    function stopCamera() {
+      cameraToken++;
+      predictionToken++;
+      if (cameraStream) cameraStream.getTracks().forEach(track=>track.stop());
+      cameraStream = null;
+      $('camera-video').pause();
+      $('camera-video').srcObject = null;
+      $('camera-video').hidden = true;
+      $('camera-empty').hidden = false;
+      $('camera-start').disabled = false;
+      $('camera-stop').disabled = true;
+    }
+    async function cameraLoop(token) {
+      if (token !== cameraToken || !cameraStream || activeTab !== 'camera') return;
+      const video = $('camera-video');
+      if (video.readyState >= 2 && aiModel) await predict(video);
+      if (token === cameraToken && cameraStream && activeTab === 'camera') setTimeout(()=>cameraLoop(token),360);
+    }
+    async function startCamera() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setResultPlaceholder('웹캠 사용 불가','HTTPS 페이지에서 열고 카메라 권한을 확인해주세요.','⚠️');
+        return;
+      }
+      $('camera-start').disabled = true;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'}}});
+        if (activeTab !== 'camera') { stream.getTracks().forEach(t=>t.stop()); return; }
+        cameraStream = stream;
+        $('camera-video').srcObject=stream;
+        await $('camera-video').play();
+        $('camera-empty').hidden=true;
+        $('camera-video').hidden=false;
+        $('camera-stop').disabled=false;
+        setResultPlaceholder(aiModel?'실시간 분석 중':'모델을 연결해주세요',aiModel?'웹캠 영상을 인식하고 있습니다.':'모델을 연결하면 실시간 분석을 시작합니다.','📹');
+        const token=++cameraToken;
+        cameraLoop(token);
+      } catch(error) {
+        stopCamera();
+        setResultPlaceholder('카메라를 켤 수 없어요','브라우저에서 카메라 접근을 허용했는지 확인해주세요.','⚠️');
+        console.warn('웹캠 오류:',error);
+      }
+    }
+    function switchTab(next) {
+      if (activeTab === next) return;
+      if (activeTab === 'camera') stopCamera();
+      ++predictionToken;
+      activeTab=next;
+      for(const name of ['upload','camera']) {
+        const selected=name===next;
+        $('tab-'+name).classList.toggle('active',selected);
+        $('tab-'+name).setAttribute('aria-selected',String(selected));
+        $('pane-'+name).hidden=!selected;
+      }
+      if (next==='upload' && imageIsReady) {
+        if (aiModel) predict($('preview-img'));
+        else setResultPlaceholder('모델 연결이 필요해요','AI 모델을 연결하면 사진을 분석합니다.','🧠');
+      } else setResultPlaceholder(next==='camera'?'웹캠 준비 중':'분석을 기다리고 있어요',next==='camera'?'웹캠 시작 버튼을 눌러주세요.':'동물 사진을 선택해주세요.',next==='camera'?'📹':'🐾');
+    }
+
+    $('tab-upload').addEventListener('click',()=>switchTab('upload'));
+    $('tab-camera').addEventListener('click',()=>switchTab('camera'));
+    $('dropzone').addEventListener('click',event=>{if(event.target.id!=='replace-image') openImageSelector();});
+    $('dropzone').addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openImageSelector();}});
+    $('replace-image').addEventListener('click',event=>{event.stopPropagation();openImageSelector();});
+    $('image-input').addEventListener('change',event=>{useImage(event.target.files?.[0]);event.target.value='';});
+    for (const type of ['dragenter','dragover']) $('dropzone').addEventListener(type,event=>{event.preventDefault();$('dropzone').classList.add('dragging');});
+    for (const type of ['dragleave','drop']) $('dropzone').addEventListener(type,event=>{event.preventDefault();$('dropzone').classList.remove('dragging');});
+    $('dropzone').addEventListener('drop',event=>useImage(event.dataTransfer?.files?.[0]));
+    $('camera-start').addEventListener('click',startCamera);
+    $('camera-stop').addEventListener('click',()=>{stopCamera();setResultPlaceholder('웹캠이 정지됐어요','시작 버튼을 누르면 다시 분석할 수 있어요.','📹');});
+    $('model-connect').addEventListener('click',()=>loadModel($('model-url').value));
+    $('model-url').addEventListener('keydown',event=>{if(event.key==='Enter') loadModel($('model-url').value);});
+    window.addEventListener('pagehide',()=>{stopCamera();if(imageObjectURL) URL.revokeObjectURL(imageObjectURL);});
+
+    // GitHub Pages에서 페이지를 열 때 ./model/을 자동으로 연결합니다.
+    loadModel('',true);
+  </script>
+</body>
+</html>
